@@ -1,0 +1,8 @@
+{
+  "name": "PDF Automator - Arquitectura",
+  "description": "Reporte de validación técnica y propuesta arquitectónica para sistema de automatización PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
