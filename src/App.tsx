@@ -135,7 +135,7 @@ export default function App() {
       <header className="h-12 shrink-0 border-b border-[#1A1F26] flex items-center justify-between px-4 bg-[#0A0D11]">
         <div className="flex items-center gap-2">
           <Book className="w-4 h-4 text-blue-500" />
-          <h1 className="font-semibold text-gray-200 tracking-tight text-[13px] uppercase">PDF Auto-Format</h1>
+          <h1 className="font-semibold text-gray-200 tracking-tight text-[13px] uppercase">PDFassembly by CFC v1.0</h1>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-row bg-[#1A1F26] rounded overflow-hidden shadow-inner border border-gray-800">
