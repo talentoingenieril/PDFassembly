@@ -37,28 +37,53 @@ export default function App() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const processSelectedFiles = (selectedFiles: File[]) => {
+    const newFiles = selectedFiles.map(file => {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        file: file,
+        name: file.name,
+        footerCustomText: nameWithoutExt.toUpperCase(),
+        isCoversPdf: false,
+        coverSettings: { useCover: false, coverPageStart: 1, coverPageEnd: 1 },
+        applyWhiteBorders: true,
+        useCustomMargins: false,
+        margins: { ...settings.globalMargins },
+        applyAnnotations: true
+      } as PDFFileItem;
+    });
+    setFiles(prev => [...prev, ...newFiles]);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files).map(file => {
-        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-        return {
-          id: Math.random().toString(36).substr(2, 9),
-          file: file,
-          name: file.name,
-          footerCustomText: nameWithoutExt.toUpperCase(),
-          isCoversPdf: false,
-          coverSettings: { useCover: false, coverPageStart: 1, coverPageEnd: 1 },
-          applyWhiteBorders: true,
-          useCustomMargins: false,
-          margins: { ...settings.globalMargins },
-          applyAnnotations: true
-        } as PDFFileItem;
-      });
-      setFiles(prev => [...prev, ...newFiles]);
+    if (e.target.files?.length) {
+      processSelectedFiles(Array.from(e.target.files));
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+    if (droppedFiles.length > 0) {
+      processSelectedFiles(droppedFiles);
+    }
   };
 
   const updateFile = (id: string, updates: Partial<PDFFileItem>) => {
@@ -241,7 +266,12 @@ export default function App() {
         </aside>
 
         {/* Main files area */}
-        <main className="flex-1 bg-[#06080A] flex flex-col">
+        <main 
+          className={`flex-1 bg-[#06080A] flex flex-col relative transition-colors ${isDragging ? 'bg-[#0A121A]' : ''}`}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
            <div className="p-3 border-b border-[#1A1F26] flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-500 uppercase">Orden de Trabajo</span>
               <button onClick={() => fileInputRef.current?.click()} className="text-xs bg-[#1A1F26] hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1 rounded flex items-center gap-1">
@@ -252,9 +282,12 @@ export default function App() {
            
            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
               {files.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-600">
-                   <FileText className="w-10 h-10 mb-2 opacity-50"/>
-                   <span className="text-sm border border-dashed border-gray-700 p-2 rounded bg-black/20">Aún no hay PDFs cargados</span>
+                <div className="h-full flex flex-col items-center justify-center text-gray-600 pointer-events-none">
+                   <FileText className={`w-10 h-10 mb-2 transition-all ${isDragging ? 'text-blue-500 scale-110' : 'opacity-50'}`}/>
+                   <span className={`text-sm border transition-all ${isDragging ? 'border-blue-500 text-blue-400 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'border-dashed border-gray-700 bg-black/20'} p-3 rounded-lg flex flex-col justify-center items-center gap-1`}>
+                      <span className={isDragging ? 'font-semibold' : ''}>{isDragging ? 'Suelta los PDFs aquí' : 'Aún no hay PDFs cargados'}</span>
+                      {!isDragging && <span className="text-[11px] text-gray-500 font-normal">o arrástralos aquí para agregarlos</span>}
+                   </span>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -356,6 +389,15 @@ export default function App() {
                 </div>
               )}
            </div>
+           
+           {isDragging && files.length > 0 && (
+              <div className="absolute inset-0 bg-[#0A121A]/80 backdrop-blur-sm border-2 border-dashed border-blue-500 z-10 flex items-center justify-center pointer-events-none">
+                 <div className="bg-[#06080A] border border-blue-500/50 p-6 rounded-xl shadow-2xl flex flex-col items-center">
+                    <Upload className="w-10 h-10 text-blue-500 mb-3 animate-bounce"/>
+                    <span className="text-blue-400 font-semibold text-base">Suelta los PDFs aquí para agregarlos</span>
+                 </div>
+              </div>
+           )}
         </main>
       </div>
 
